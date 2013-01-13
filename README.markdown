@@ -1,15 +1,22 @@
 # InstaOverlay aka. MAImagePickerController
 
 MAImagePickerController is a critical component of the InstaPDF (http://instapdf.me) for iPhone app. I've started to code in Objective C a couple of months ago, so please
-offer your insights into making the component better.
+offer your insights into making the component better. Be sure to checkout the ToDo!
+
+## ToDo
+
+1. Improve Paper (Edge) Detection
+2. Fix rotation of UIImages chosen from the Library
+3. Store the rotations in the final view
+
 
 ## Screenshots
 
-![Camera Viewer](https://github.com/mmackh/MAImagePickerController-of-InstaPDF/blob/master/screen1.PNG?raw=true "Take an image")
+![Camera Viewer](https://github.com/mmackh/MAImagePickerController-of-InstaPDF/blob/master/screen1.PNG "Take an image")
 
-![Cropping View](https://github.com/mmackh/MAImagePickerController-of-InstaPDF/blob/master/screen2.PNG?raw=true "Crop")
+![Cropping View](https://github.com/mmackh/MAImagePickerController-of-InstaPDF/blob/master/screen2.PNG "Crop")
 
-![Final/Adjusting View](https://github.com/mmackh/MAImagePickerController-of-InstaPDF/blob/master/screen3.PNG?raw=true "Adjust the image, rotate, filter and confirm.")
+![Final/Adjusting View](https://github.com/mmackh/MAImagePickerController-of-InstaPDF/blob/master/screen3.PNG "Adjust the image, rotate, filter and confirm.")
 
 ## Using it in your project
 
@@ -67,12 +74,6 @@ offer your insights into making the component better.
     [[NSNotificationCenter defaultCenter] removeObserver:self name:@"MAIPCSuccess" object:nil];
 }
 ```
-
-## ToDo
-
-1. Improve Paper Detection
-2. Fix rotation of all the UIImages
-3. Store the rotations
 
 # License
 Copyright (c) 2012-2013 Maximilian Mackh
