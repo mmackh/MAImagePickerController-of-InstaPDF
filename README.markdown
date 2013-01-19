@@ -1,7 +1,15 @@
 # MAImagePickerController aka. InstaOverlay
 
 MAImagePickerController is a critical component of the InstaPDF (http://instapdf.me) for iPhone app. I've started to code in Objective C a couple of months ago, so please
-offer your insights into making the component better. Be sure to checkout the ToDo!
+offer your insights into making the component better.
+
+Credits:
+- Maximilian Mackh (<a href="http://twitter.com/mmackh">@mmackh</a>)
+- Utkarsh Sinha (<a href="http://twitter.com/aishack">@aishack</a>) - Excellent Tutorials
+- Jason Job (<a href="https://twitter.com/musicalgeometry">@musicalgeometry</a>) - Excellent Tutorial
+- OpenCV (<a href="http://opencv.org/">http://opencv.org/</a>);
+
+Be sure to checkout the ToDo!
 
 ## ToDo
 
