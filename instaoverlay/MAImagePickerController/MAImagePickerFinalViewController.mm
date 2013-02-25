@@ -118,6 +118,8 @@
 - (void)comfirmFinishedImage
 {
     [self storeImageToCache];
+    [self.navigationController dismissViewControllerAnimated:YES completion:nil];
+    
 }
 
 - (void)adjustPreviewImage
@@ -168,11 +170,10 @@
                 
                 cv::Mat new_image = cv::Mat::zeros( original.size(), original.type() );
                 
-                original.convertTo(new_image, -1, 1.2, 30);
+                original.convertTo(new_image, -1, 1.4, -50);
+                original.release();
                 
                 _adjustedImage = [MAOpenCV UIImageFromCVMat:new_image];
-                
-                original.release();
                 new_image.release();
             }
             
@@ -189,11 +190,11 @@
                 
                 cv::Mat new_image = cv::Mat::zeros( original.size(), original.type() );
                 
-                original.convertTo(new_image, -1, 2.2, 0);
-                
-                _adjustedImage = [MAOpenCV UIImageFromCVMat:new_image];
+                original.convertTo(new_image, -1, 1.9, -80);
                 
                 original.release();
+                
+                _adjustedImage = [MAOpenCV UIImageFromCVMat:new_image];
                 new_image.release();
             }
             
@@ -418,6 +419,8 @@
             _adjustedImage = [[UIImage alloc] initWithCGImage: _adjustedImage.CGImage
                                                         scale: 1.0
                                                   orientation: UIImageOrientationRight];
+            break;
+        default:
             break;
     }
     

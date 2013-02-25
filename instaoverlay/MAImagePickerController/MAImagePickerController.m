@@ -11,6 +11,8 @@
 
 #import "UIImage+fixOrientation.h"
 
+#import <MediaPlayer/MediaPlayer.h>
+
 
 @interface MAImagePickerController ()
 - (void)image:(UIImage *)image didFinishSavingWithError:(NSError *)error contextInfo:(void *)contextInfo;
@@ -60,6 +62,11 @@
         
         UIImageView *gridCameraView = [[UIImageView alloc] initWithImage:gridImage];
         [gridCameraView setFrame:CGRectMake(0, 0, self.view.bounds.size.width, self.view.bounds.size.height - kCameraToolBarHeight)];
+        
+        UISwipeGestureRecognizer *swipeDown = [[UISwipeGestureRecognizer alloc] initWithTarget:self action:@selector(dismissMAImagePickerController)];
+        [swipeDown setDirection:UISwipeGestureRecognizerDirectionDown];
+        [self.view addGestureRecognizer:swipeDown];
+        
         [[self view] addSubview:gridCameraView];
         
         _cameraToolbar = [[UIToolbar alloc] initWithFrame:CGRectMake(0, self.view.bounds.size.height - kCameraToolBarHeight, self.view.bounds.size.width, kCameraToolBarHeight)];
@@ -122,6 +129,18 @@
         _invokeCamera.allowsEditing = NO;
         [self.view addSubview:_invokeCamera.view];
     }
+    
+    [[NSNotificationCenter defaultCenter]
+     addObserver:self
+     selector:@selector(pictureMAIMagePickerController)
+     name:@"AVSystemController_SystemVolumeDidChangeNotification"
+     object:nil];
+    
+    CGRect frame = CGRectMake(-1000, -1000, 100, 100);
+    MPVolumeView *volumeView = [[MPVolumeView alloc] initWithFrame:frame];
+    [volumeView sizeToFit];
+    [self.view addSubview:volumeView];
+    
 }
 
 - (void)viewDidAppear:(BOOL)animated
@@ -133,8 +152,16 @@
     }
 }
 
+- (void)viewWillAppear:(BOOL)animated
+{
+    AudioSessionInitialize(NULL, NULL, NULL, NULL);
+    AudioSessionSetActive(YES);
+}
+
 - (void)dismissMAImagePickerController
 {
+    AudioSessionSetActive(NO);
+    
     if (_imageSource == 0 && [UIImagePickerController isSourceTypeAvailable:UIImagePickerControllerSourceTypeCamera])
     {
         [[_captureManager captureSession] stopRunning];
