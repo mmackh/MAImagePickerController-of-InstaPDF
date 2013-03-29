@@ -69,6 +69,8 @@
 		22901DE616494D6E00D0FEAD /* crop-button-icon@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 22901DE416494D6E00D0FEAD /* crop-button-icon@2x.png */; };
 		22901DE9164959E800D0FEAD /* toolbar-icon-crop@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 22901DE7164959E800D0FEAD /* toolbar-icon-crop@2x.png */; };
 		22901DEA164959E800D0FEAD /* toolbar-icon-crop.png in Resources */ = {isa = PBXBuildFile; fileRef = 22901DE8164959E800D0FEAD /* toolbar-icon-crop.png */; };
+		22BA6A911704497A00B111E4 /* AudioToolbox.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 22BA6A901704497A00B111E4 /* AudioToolbox.framework */; };
+		22BA6A931704498F00B111E4 /* MediaPlayer.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 22BA6A921704498F00B111E4 /* MediaPlayer.framework */; };
 		22F46B5716A2B94F0078DFDE /* MACaptureSession.m in Sources */ = {isa = PBXBuildFile; fileRef = 22F46B4616A2B94F0078DFDE /* MACaptureSession.m */; };
 		22F46B5816A2B94F0078DFDE /* MAConstants.m in Sources */ = {isa = PBXBuildFile; fileRef = 22F46B4816A2B94F0078DFDE /* MAConstants.m */; };
 		22F46B5916A2B94F0078DFDE /* MADrawRect.m in Sources */ = {isa = PBXBuildFile; fileRef = 22F46B4A16A2B94F0078DFDE /* MADrawRect.m */; };
@@ -148,6 +150,8 @@
 		22901DE416494D6E00D0FEAD /* crop-button-icon@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "crop-button-icon@2x.png"; sourceTree = "<group>"; };
 		22901DE7164959E800D0FEAD /* toolbar-icon-crop@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "toolbar-icon-crop@2x.png"; sourceTree = "<group>"; };
 		22901DE8164959E800D0FEAD /* toolbar-icon-crop.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "toolbar-icon-crop.png"; sourceTree = "<group>"; };
+		22BA6A901704497A00B111E4 /* AudioToolbox.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AudioToolbox.framework; path = System/Library/Frameworks/AudioToolbox.framework; sourceTree = SDKROOT; };
+		22BA6A921704498F00B111E4 /* MediaPlayer.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = MediaPlayer.framework; path = System/Library/Frameworks/MediaPlayer.framework; sourceTree = SDKROOT; };
 		22F46B4516A2B94F0078DFDE /* MACaptureSession.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = MACaptureSession.h; path = MAImagePickerController/MACaptureSession.h; sourceTree = "<group>"; };
 		22F46B4616A2B94F0078DFDE /* MACaptureSession.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = MACaptureSession.m; path = MAImagePickerController/MACaptureSession.m; sourceTree = "<group>"; };
 		22F46B4716A2B94F0078DFDE /* MAConstants.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = MAConstants.h; path = MAImagePickerController/MAConstants.h; sourceTree = "<group>"; };
@@ -173,6 +177,8 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				22BA6A931704498F00B111E4 /* MediaPlayer.framework in Frameworks */,
+				22BA6A911704497A00B111E4 /* AudioToolbox.framework in Frameworks */,
 				22078047164F1F1F0081E1E8 /* CoreImage.framework in Frameworks */,
 				2255BC5E1649B2D600B3A1C2 /* opencv2.framework in Frameworks */,
 				226D59891648779200A3A98F /* QuartzCore.framework in Frameworks */,
@@ -208,6 +214,8 @@
 		2237CA141647E85000B77E0E /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				22BA6A921704498F00B111E4 /* MediaPlayer.framework */,
+				22BA6A901704497A00B111E4 /* AudioToolbox.framework */,
 				22078046164F1F1E0081E1E8 /* CoreImage.framework */,
 				2255BC5D1649B2D600B3A1C2 /* opencv2.framework */,
 				226D59881648779200A3A98F /* QuartzCore.framework */,

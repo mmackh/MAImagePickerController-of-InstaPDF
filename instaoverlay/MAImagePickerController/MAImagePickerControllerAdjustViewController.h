@@ -6,6 +6,8 @@
 //  Copyright (c) 2012 mackh ag. All rights reserved.
 //
 
+//Dedected Points
+
 #import <UIKit/UIKit.h>
 
 #import "MAConstants.h"

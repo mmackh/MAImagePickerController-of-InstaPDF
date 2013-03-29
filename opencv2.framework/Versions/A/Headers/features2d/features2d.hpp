@@ -658,6 +658,7 @@ protected:
   virtual void findBlobs(const Mat &image, const Mat &binaryImage, vector<Center> &centers) const;
 
   Params params;
+  AlgorithmInfo* info() const;
 };
 
 
@@ -1198,13 +1199,14 @@ protected:
 class CV_EXPORTS_W BFMatcher : public DescriptorMatcher
 {
 public:
-    CV_WRAP BFMatcher( int normType, bool crossCheck=false );
+    CV_WRAP BFMatcher( int normType=NORM_L2, bool crossCheck=false );
     virtual ~BFMatcher() {}
 
     virtual bool isMaskSupported() const { return true; }
 
     virtual Ptr<DescriptorMatcher> clone( bool emptyTrainData=false ) const;
 
+    AlgorithmInfo* info() const;
 protected:
     virtual void knnMatchImpl( const Mat& queryDescriptors, vector<vector<DMatch> >& matches, int k,
            const vector<Mat>& masks=vector<Mat>(), bool compactResult=false );
@@ -1238,6 +1240,7 @@ public:
 
     virtual Ptr<DescriptorMatcher> clone( bool emptyTrainData=false ) const;
 
+    AlgorithmInfo* info() const;
 protected:
     static void convertToDMatches( const DescriptorCollection& descriptors,
                                    const Mat& indices, const Mat& distances,

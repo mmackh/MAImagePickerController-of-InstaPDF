@@ -15,6 +15,7 @@
 
 @interface MAImagePickerControllerAdjustViewController ()
 
+
 @end
 
 @implementation MAImagePickerControllerAdjustViewController
@@ -105,304 +106,98 @@
 
 - (void)detectEdges
 {
-    cv::Mat original = [MAOpenCV cvMatGrayFromUIImage:_adjustedImage];
+    cv::Mat original = [MAOpenCV cvMatFromUIImage:_adjustedImage];
     CGSize targetSize = _sourceImageView.contentSize;
     cv::resize(original, original, cvSize(targetSize.width, targetSize.height));
     
-    cv::Mat outerBox = cv::Mat(original.size(), CV_8UC1);
+    cv::vector<cv::vector<cv::Point>>squares;
+    cv::vector<cv::Point> largest_square;
     
-    cv::GaussianBlur(original, original, cvSize(11,11), 0);
-    cv::adaptiveThreshold(original, outerBox, 255, cv::ADAPTIVE_THRESH_MEAN_C, cv::THRESH_BINARY, 5, 2);
-    
-    original.release();
-    
-    cv::bitwise_not(outerBox, outerBox);
-    
-    uchar ps[] = {0,1,0,1,1,1,0,1,0};
-    cv::Mat kernel = cv::Mat_<uchar>(3,3, ps);
-    dilate(outerBox, outerBox, kernel);
-    
-    int max=-1;
-    cv::Point maxPt;
-    
-    for(int y=0;y < outerBox.size().height;y++)
+    find_squares(original, squares);
+    find_largest_square(squares, largest_square);
+
+    if (largest_square.size() == 4)
     {
-        uchar *row = outerBox.ptr(y);
-        for(int x=0;x < outerBox.size().width;x++)
-        {
-            if(row[x]>=128)
-            {
-                int area = floodFill(outerBox, cv::Point(x,y), CV_RGB(0,0,64));
-                
-                if(area>max)
-                {
-                    maxPt = cvPoint(x,y);
-                    max = area;
-                }
-            }
-        }
-    }
-    
-    floodFill(outerBox, maxPt, CV_RGB(255,255,255));
-    
-    for(int y=0;y < outerBox.size().height;y++)
-    {
-        uchar *row = outerBox.ptr(y);
-        for(int x=0;x < outerBox.size().width;x++)
-        {
-            if(row[x]==64 && x!=maxPt.x && y != maxPt.y)
-            {
-                floodFill(outerBox, cv::Point(x,y), CV_RGB(0,0,0));
-            }
-        }
-    }
-    
-    erode(outerBox, outerBox, kernel);
-    
-    
-    std::vector<cv::Vec2f> lines;
-    cv::HoughLines(outerBox, lines, 1, CV_PI/180, 60);
-    
-    /*
-    for(int i=0;i < lines.size();i++)
-    {
-        cv::Vec2f line = lines[i];
-        cv::Scalar rgb = CV_RGB(0,0,128);
         
-        if(line[1]!=0)
+        // Manually sorting points, needs major improvement. Sorry.
+        
+        NSMutableArray *points = [NSMutableArray array];
+        NSMutableDictionary *sortedPoints = [NSMutableDictionary dictionary];
+        
+        for (int i = 0; i < 4; i++)
         {
-            float m = -1/tan(line[1]);
-            float c = line[0]/sin(line[1]);
+            NSDictionary *dict = [NSDictionary dictionaryWithObjectsAndKeys:[NSValue valueWithCGPoint:CGPointMake(largest_square[i].x, largest_square[i].y)], @"point" , [NSNumber numberWithInt:(largest_square[i].x + largest_square[i].y)], @"value", nil];
+            [points addObject:dict];
+        }
+        
+        int min = [[points valueForKeyPath:@"@min.value"] intValue];
+        int max = [[points valueForKeyPath:@"@max.value"] intValue];
+        
+        int minIndex;
+        int maxIndex;
+        
+        int missingIndexOne;
+        int missingIndexTwo;
+        
+        for (int i = 0; i < 4; i++)
+        {
+            NSDictionary *dict = [points objectAtIndex:i];
             
-            cv::line(outerBox, cv::Point(0, c), cv::Point(outerBox.size().width, m*outerBox.size().width+c), rgb);
-        }
-        else
-        {
-            cv::line(outerBox, cv::Point(line[0], 0), cv::Point(line[0], outerBox.size().height), rgb);
-        }
-    }
-    */
-    
-    cv::vector<cv::Vec2f>::iterator current;
-    for(current = lines.begin();current != lines.end(); current++)
-    {
-        if((*current)[0]==0 && (*current)[1] == -100)
-        {
-            continue;
-        }
-        
-        float p1 = (*current)[0];
-        float theta1 = (*current)[1];
-        
-        cv::Point pt1current, pt2current;
-        if(theta1 > CV_PI*45/180 && theta1 < CV_PI*135/180)
-        {
-            pt1current.x=0;
-            pt1current.y = p1/sin(theta1);
-            
-            pt2current.x= outerBox.size().width;
-            pt2current.y=-pt2current.x/tan(theta1) + p1/sin(theta1);
-        }
-        else
-        {
-            pt1current.y=0;
-            pt1current.x=p1/cos(theta1);
-            
-            pt2current.y= outerBox.size().height;
-            pt2current.x=-pt2current.y/tan(theta1) + p1/cos(theta1);
-        }
-        
-        cv::vector<cv::Vec2f>::iterator pos;
-        for(pos = lines.begin(); pos != lines.end(); pos++)
-        {
-            if(*current==*pos)
+            if ([[dict objectForKey:@"value"] intValue] == min)
             {
+                [sortedPoints setObject:[dict objectForKey:@"point"] forKey:@"0"];
+                minIndex = i;
                 continue;
             }
             
-            if(fabs((*pos)[0]-(*current)[0]) < 20 && fabs((*pos)[1]-(*current)[1]) < CV_PI*10/180)
+            if ([[dict objectForKey:@"value"] intValue] == max)
             {
-                float p = (*pos)[0];
-                float theta = (*pos)[1];
-                cv::Point pt1, pt2;
-                if((*pos)[1] > CV_PI*45/180 && (*pos)[1]< CV_PI*135/180)
-                {
-                    pt1.x=0;
-                    pt1.y = p/sin(theta);
-                    pt2.x=outerBox.size().width;
-                    pt2.y=-pt2.x/tan(theta) + p/sin(theta);
-                }
-                else
-                {
-                    pt1.y=0;
-                    pt1.x=p/cos(theta);
-                    pt2.y=outerBox.size().height;
-                    pt2.x=-pt2.y/tan(theta) + p/cos(theta);
-                }
-                
-                if(((double)(pt1.x-pt1current.x)*(pt1.x-pt1current.x) + (pt1.y-pt1current.y)*(pt1.y-pt1current.y) < 64*64)
-                   &&
-                   ((double)(pt2.x-pt2current.x)*(pt2.x-pt2current.x) + (pt2.y-pt2current.y)*(pt2.y-pt2current.y) < 64*64))
-                {
-                    // Merge the two
-                    (*current)[0] = ((*current)[0]+(*pos)[0])/2;
-                    (*current)[1] = ((*current)[1]+(*pos)[1])/2;
-                    
-                    (*pos)[0]=0;
-                    (*pos)[1]=-100;
-                }
+                [sortedPoints setObject:[dict objectForKey:@"point"] forKey:@"2"];
+                maxIndex = i;
+                continue;
             }
             
-        }
-    }
-    
-    cv::Vec2f topEdge = cv::Vec2f(1000,1000);
-    cv::Vec2f bottomEdge = cv::Vec2f(-1000,-1000);
-    cv::Vec2f leftEdge = cv::Vec2f(1000,1000);
-    cv::Vec2f rightEdge = cv::Vec2f(-1000,-1000);
-    
-    
-    double leftXIntercept=100000;
-    double rightXIntercept=0;
-    
-    
-    for(int i=0;i  < lines.size();i++)
-    {
-        cv::Vec2f current = lines[i];
-        
-        float p=current[0];
-        float theta=current[1];
-        
-        if(p==0 && theta==-100)
-        {
-            continue;
-        }
-        
-        double xIntercept, yIntercept;
-        xIntercept = p/cos(theta);
-        yIntercept = p/(cos(theta)*sin(theta));
-        
-        if(theta > CV_PI*80/180 && theta < CV_PI*100/180)
-        {
-            if(p < topEdge[0])
-            {
-                topEdge = current;
-            }
+            NSLog(@"MSSSING %i", i);
             
-            if(p > bottomEdge[0])
+            missingIndexOne = i;
+        }
+        
+        for (int i = 0; i < 4; i++)
+        {
+            if (missingIndexOne != i && minIndex != i && maxIndex != i)
             {
-                bottomEdge = current;
+                missingIndexTwo = i;
             }
         }
-        else if(theta < CV_PI*10/180 || theta > CV_PI*170/180)
-        {
-            if(xIntercept > rightXIntercept)
-            {
-                rightEdge = current;
-                rightXIntercept = xIntercept;
-            }
-            else if(xIntercept <= leftXIntercept)
-            {
-                leftEdge = current;
-                leftXIntercept = xIntercept;
-            }
-        }
-    }
-    
-    cv::Point left1, left2, right1, right2, bottom1, bottom2, top1, top2;
-    
-    int height=outerBox.size().height;
-    int width=outerBox.size().width;
-    
-    if(leftEdge[1]!=0)
-    {
-        left1.x=0;        left1.y=leftEdge[0]/sin(leftEdge[1]);
-        left2.x=width;    left2.y=-left2.x/tan(leftEdge[1]) + left1.y;
-    }
-    else
-    {
-        left1.y=0;        left1.x=leftEdge[0]/cos(leftEdge[1]);
-        left2.y=height;    left2.x=left1.x - height*tan(leftEdge[1]);
-    }
-    
-    if(rightEdge[1]!=0)
-    {
-        right1.x=0;        right1.y=rightEdge[0]/sin(rightEdge[1]);
-        right2.x=width;    right2.y=-right2.x/tan(rightEdge[1]) + right1.y;
-    }
-    else
-    {
-        right1.y=0;        right1.x=rightEdge[0]/cos(rightEdge[1]);
-        right2.y=height;    right2.x=right1.x - height*tan(rightEdge[1]);
-    }
-    
-    bottom1.x=0;    bottom1.y=bottomEdge[0]/sin(bottomEdge[1]);
-    bottom2.x=width;bottom2.y=-bottom2.x/tan(bottomEdge[1]) + bottom1.y;
-    
-    top1.x=0;        top1.y=topEdge[0]/sin(topEdge[1]);
-    top2.x=width;    top2.y=-top2.x/tan(topEdge[1]) + top1.y;
-    
-    double leftA = left2.y-left1.y;
-    double leftB = left1.x-left2.x;
-    double leftC = leftA*left1.x + leftB*left1.y;
-    
-    double rightA = right2.y-right1.y;
-    double rightB = right1.x-right2.x;
-    double rightC = rightA*right1.x + rightB*right1.y;
-    
-    double topA = top2.y-top1.y;
-    double topB = top1.x-top2.x;
-    double topC = topA*top1.x + topB*top1.y;
-    
-    double bottomA = bottom2.y-bottom1.y;
-    double bottomB = bottom1.x-bottom2.x;
-    double bottomC = bottomA*bottom1.x + bottomB*bottom1.y;
-    
-    double detTopLeft = leftA*topB - leftB*topA;
-    CvPoint ptTopLeft = cvPoint((topB*leftC - leftB*topC)/detTopLeft  + 15, (leftA*topC - topA*leftC)/detTopLeft + 16);
-    
-    double detTopRight = rightA*topB - rightB*topA;
-    CvPoint ptTopRight = cvPoint((topB*rightC-rightB*topC)/detTopRight - 17, (rightA*topC-topA*rightC)/detTopRight);
-    
-    double detBottomRight = rightA*bottomB - rightB*bottomA;
-    CvPoint ptBottomRight = cvPoint((bottomB*rightC-rightB*bottomC)/detBottomRight, (rightA*bottomC-bottomA*rightC)/detBottomRight);
-    
-    double detBottomLeft = leftA*bottomB-leftB*bottomA;
-    CvPoint ptBottomLeft = cvPoint((bottomB*leftC-leftB*bottomC)/detBottomLeft - 3, (leftA*bottomC-bottomA*leftC)/detBottomLeft - 8);
-    
-    if (CGRectContainsPoint([_sourceImageView contentFrame], CGPointMake(ptTopLeft.x, ptTopLeft.y)) &&
-        CGRectContainsPoint([_sourceImageView contentFrame], CGPointMake(ptTopRight.x, ptTopRight.y)) &&
-        CGRectContainsPoint([_sourceImageView contentFrame], CGPointMake(ptBottomRight.x, ptBottomRight.y)) &&
-        CGRectContainsPoint([_sourceImageView contentFrame], CGPointMake(ptBottomLeft.x, ptBottomLeft.y))
-        )
-    {
-        CGFloat w1 = sqrt( pow(ptBottomRight.x - ptBottomLeft.x , 2) + pow(ptBottomRight.x - ptBottomLeft.x, 2));
-        CGFloat w2 = sqrt( pow(ptTopRight.x - ptTopLeft.x , 2) + pow(ptTopRight.x - ptTopLeft.x, 2));
         
-        CGFloat h1 = sqrt( pow(ptTopRight.y - ptBottomRight.y , 2) + pow(ptTopRight.y - ptBottomRight.y, 2));
-        CGFloat h2 = sqrt( pow(ptTopLeft.y - ptBottomLeft.y , 2) + pow(ptTopLeft.y - ptBottomLeft.y, 2));
         
-        if ((w1 || w2 > 100.0 ) && (h1 || h2 > 100))
+        if (largest_square[missingIndexOne].x < largest_square[missingIndexTwo].x)
         {
-            [_adjustRect topLeftCornerToCGPoint:CGPointMake(ptTopLeft.x, ptTopLeft.y)];
-            [_adjustRect topRightCornerToCGPoint:CGPointMake(ptTopRight.x, ptTopRight.y)];
-            [_adjustRect bottomRightCornerToCGPoint:CGPointMake(ptBottomRight.x, ptBottomRight.y)];
-            [_adjustRect bottomLeftCornerToCGPoint:CGPointMake(ptBottomLeft.x, ptBottomLeft.y)];
+            //2nd Point Found
+            [sortedPoints setObject:[[points objectAtIndex:missingIndexOne] objectForKey:@"point"] forKey:@"3"];
+            [sortedPoints setObject:[[points objectAtIndex:missingIndexTwo] objectForKey:@"point"] forKey:@"1"];
         }
         else
         {
-            NSLog(@"Sample area too small");
+            //4rd Point Found
+            [sortedPoints setObject:[[points objectAtIndex:missingIndexOne] objectForKey:@"point"] forKey:@"1"];
+            [sortedPoints setObject:[[points objectAtIndex:missingIndexTwo] objectForKey:@"point"] forKey:@"3"];
         }
+        
+        
+        [_adjustRect topLeftCornerToCGPoint:[(NSValue *)[sortedPoints objectForKey:@"0"] CGPointValue]];
+        [_adjustRect topRightCornerToCGPoint:[(NSValue *)[sortedPoints objectForKey:@"1"] CGPointValue]];
+        [_adjustRect bottomRightCornerToCGPoint:[(NSValue *)[sortedPoints objectForKey:@"2"] CGPointValue]];
+        [_adjustRect bottomLeftCornerToCGPoint:[(NSValue *)[sortedPoints objectForKey:@"3"] CGPointValue]];
     }
-    
+
+    original.release();
+
     /*
     [_sourceImageView setNeedsDisplay];
-    [_sourceImageView setImage:[MAOpenCV UIImageFromCVMat:outerBox]];
+    [_sourceImageView setImage:[MAOpenCV UIImageFromCVMat:original]];
     [_sourceImageView setContentMode:UIViewContentModeScaleAspectFit];
-     
      */
-    
-    outerBox.release();
 }
 
 - (void)confirmedImage
@@ -492,6 +287,140 @@
 - (BOOL)shouldAutorotate
 {
     return NO;
+}
+
+// http://stackoverflow.com/questions/8667818/opencv-c-obj-c-detecting-a-sheet-of-paper-square-detection
+void find_squares(cv::Mat& image, cv::vector<cv::vector<cv::Point>>&squares) {
+    
+    // blur will enhance edge detection
+    cv::Mat blurred(image);
+    medianBlur(image, blurred, 9);
+    
+    cv::Mat gray0(blurred.size(), CV_8U), gray;
+    cv::vector<cv::vector<cv::Point> > contours;
+    
+    // find squares in every color plane of the image
+    for (int c = 0; c < 3; c++)
+    {
+        int ch[] = {c, 0};
+        mixChannels(&blurred, 1, &gray0, 1, ch, 1);
+        
+        // try several threshold levels
+        const int threshold_level = 2;
+        for (int l = 0; l < threshold_level; l++)
+        {
+            // Use Canny instead of zero threshold level!
+            // Canny helps to catch squares with gradient shading
+            if (l == 0)
+            {
+                Canny(gray0, gray, 10, 20, 3); //
+                
+                // Dilate helps to remove potential holes between edge segments
+                dilate(gray, gray, cv::Mat(), cv::Point(-1,-1));
+            }
+            else
+            {
+                gray = gray0 >= (l+1) * 255 / threshold_level;
+            }
+            
+            // Find contours and store them in a list
+            findContours(gray, contours, CV_RETR_LIST, CV_CHAIN_APPROX_SIMPLE);
+            
+            // Test contours
+            cv::vector<cv::Point> approx;
+            for (size_t i = 0; i < contours.size(); i++)
+            {
+                // approximate contour with accuracy proportional
+                // to the contour perimeter
+                approxPolyDP(cv::Mat(contours[i]), approx, arcLength(cv::Mat(contours[i]), true)*0.02, true);
+                
+                // Note: absolute value of an area is used because
+                // area may be positive or negative - in accordance with the
+                // contour orientation
+                if (approx.size() == 4 &&
+                    fabs(contourArea(cv::Mat(approx))) > 1000 &&
+                    isContourConvex(cv::Mat(approx)))
+                {
+                    double maxCosine = 0;
+                    
+                    for (int j = 2; j < 5; j++)
+                    {
+                        double cosine = fabs(angle(approx[j%4], approx[j-2], approx[j-1]));
+                        maxCosine = MAX(maxCosine, cosine);
+                    }
+                    
+                    if (maxCosine < 0.3)
+                        squares.push_back(approx);
+                }
+            }
+        }
+    }
+}
+
+void find_largest_square(const cv::vector<cv::vector<cv::Point> >& squares, cv::vector<cv::Point>& biggest_square)
+{
+    if (!squares.size())
+    {
+        // no squares detected
+        return;
+    }
+    
+    int max_width = 0;
+    int max_height = 0;
+    int max_square_idx = 0;
+    
+    for (size_t i = 0; i < squares.size(); i++)
+    {
+        // Convert a set of 4 unordered Points into a meaningful cv::Rect structure.
+        cv::Rect rectangle = boundingRect(cv::Mat(squares[i]));
+        
+        //        cout << "find_largest_square: #" << i << " rectangle x:" << rectangle.x << " y:" << rectangle.y << " " << rectangle.width << "x" << rectangle.height << endl;
+        
+        // Store the index position of the biggest square found
+        if ((rectangle.width >= max_width) && (rectangle.height >= max_height))
+        {
+            max_width = rectangle.width;
+            max_height = rectangle.height;
+            max_square_idx = i;
+        }
+    }
+    
+    biggest_square = squares[max_square_idx];
+}
+
+
+double angle( cv::Point pt1, cv::Point pt2, cv::Point pt0 ) {
+    double dx1 = pt1.x - pt0.x;
+    double dy1 = pt1.y - pt0.y;
+    double dx2 = pt2.x - pt0.x;
+    double dy2 = pt2.y - pt0.y;
+    return (dx1*dx2 + dy1*dy2)/sqrt((dx1*dx1 + dy1*dy1)*(dx2*dx2 + dy2*dy2) + 1e-10);
+}
+
+cv::Mat debugSquares( std::vector<std::vector<cv::Point> > squares, cv::Mat image ){
+    
+    NSLog(@"DEBUG!/?!");
+    for ( unsigned int i = 0; i< squares.size(); i++ ) {
+        // draw contour
+        
+        NSLog(@"LOOP!");
+        
+        cv::drawContours(image, squares, i, cv::Scalar(255,0,0), 1, 8, std::vector<cv::Vec4i>(), 0, cv::Point());
+        
+        // draw bounding rect
+        cv::Rect rect = boundingRect(cv::Mat(squares[i]));
+        cv::rectangle(image, rect.tl(), rect.br(), cv::Scalar(0,255,0), 2, 8, 0);
+        
+        // draw rotated rect
+        cv::RotatedRect minRect = minAreaRect(cv::Mat(squares[i]));
+        cv::Point2f rect_points[4];
+        minRect.points( rect_points );
+        for ( int j = 0; j < 4; j++ ) {
+            cv::line( image, rect_points[j], rect_points[(j+1)%4], cv::Scalar(0,0,255), 1, 8 ); // blue
+        }
+    }
+    
+    return image;
 }
 
 @end
