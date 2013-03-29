@@ -7,15 +7,17 @@ Credits:
 - Maximilian Mackh (<a href="http://twitter.com/mmackh">@mmackh</a>)
 - Utkarsh Sinha (<a href="http://twitter.com/aishack">@aishack</a>) - Excellent Tutorials
 - Jason Job (<a href="https://twitter.com/musicalgeometry">@musicalgeometry</a>) - Excellent Tutorial
+- Karl Phillip Buhr (<a href="https://twitter.com/karlphillip">@karlphillip</a>) - Excellent Square Detection Code
 - OpenCV (<a href="http://opencv.org/">http://opencv.org/</a>);
 
 Be sure to checkout the ToDo!
 
 ## ToDo
 
-1. Improve Paper (Edge) Detection
+1. ~~Improve Paper (Edge) Detection~~
 2. Fix rotation of UIImages chosen from the Library
 3. Store the rotations in the final view
+4. Improve API
 
 
 ## Screenshots
