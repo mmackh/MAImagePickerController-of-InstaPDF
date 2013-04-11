@@ -33,8 +33,8 @@ Be sure to checkout the ToDo!
 1. Add all the necessary files inside MAImagePicker to your Project
 2. #import "MAImagePickerController.h" in your ViewController's header (.h) file & declare that it can be delegated by MAImagePickerControllerDelegate
 3. IMPORTANT: This project uses the OpenCV framework. Download the newest version here: 'http://opencv.org/'
-4. The API is rather simple, use it like this:
-5. Double check all the necessary frameworks: 'CoreImage.framework', 'opencv2.framework', 'QuartzCore.framework', 'ImageIO.framework', 'CoreMedia.framework', 'AVFoundation.framework'
+4. Double check all the necessary frameworks: 'CoreImage.framework', 'opencv2.framework', 'QuartzCore.framework', 'ImageIO.framework', 'CoreMedia.framework', 'AVFoundation.framework', MediaPlayer.framework
+5. The API is rather simple, use it like this:
 
 ```objective-c
 - (IBAction)initButton:(id)sender
