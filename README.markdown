@@ -24,7 +24,7 @@ Be sure to checkout the ToDo!
 
 ![Camera Viewer](https://github.com/mmackh/MAImagePickerController-of-InstaPDF/blob/master/screen1.PNG?raw=true "Take an image")
 
-![Cropping View](https://github.com/mmackh/MAImagePickerController-of-InstaPDF/blob/master/srceen2.PNG?raw=true "Crop")
+![Cropping View](https://github.com/mmackh/MAImagePickerController-of-InstaPDF/blob/master/screen2.PNG?raw=true "Crop")
 
 ![Final/Adjusting View](https://github.com/mmackh/MAImagePickerController-of-InstaPDF/blob/master/screen3.PNG?raw=true "Adjust the image, rotate, filter and confirm.")
 
