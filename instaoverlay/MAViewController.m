@@ -7,7 +7,6 @@
 //
 
 #import "MAViewController.h"
-#import "MAImagePickerController.h"
 
 @interface MAViewController ()
 
@@ -29,49 +28,36 @@
 
 - (IBAction)initButton:(id)sender
 {
-    MAImagePickerController *customImagePickerController = [[MAImagePickerController alloc] init];
-    customImagePickerController.imageSource = 0; //0 -> Camera (if available), 1 -> Library
+    MAImagePickerController *imagePicker = [[MAImagePickerController alloc] init];
+   
+    [imagePicker setDelegate:self];
+    [imagePicker setSourceType:MAImagePickerControllerSourceTypeCamera];
     
-    UINavigationController *navigationController = [[UINavigationController alloc] initWithRootViewController:customImagePickerController];
-    [self addMANotificationObservers];
+    UINavigationController *navigationController = [[UINavigationController alloc] initWithRootViewController:imagePicker];
+    
     [self presentViewController:navigationController animated:YES completion:nil];
 }
 
-- (void) MAImagePickerClosed
+- (void)imagePickerDidCancel
 {
-    NSLog(@"No Image Chosen");
-    [self removeMANotificationObservers];
     [self dismissViewControllerAnimated:YES completion:nil];
 }
 
-- (void) MAImagePickerChosen:(NSNotification *)notification
+- (void)imagePickerDidChooseImageWithPath:(NSString *)path
 {
     [self dismissViewControllerAnimated:YES completion:nil];
     
-    NSString *tmpPath = [notification object];
-    if ([[NSFileManager defaultManager] fileExistsAtPath:tmpPath])
+    if ([[NSFileManager defaultManager] fileExistsAtPath:path])
     {
-        NSLog(@"File Found at %@", tmpPath);
+        NSLog(@"File Found at %@", path);
         
     }
     else
     {
-        NSLog(@"No File Found at %@", tmpPath);
+        NSLog(@"No File Found at %@", path);
     }
-    [[NSFileManager defaultManager] removeItemAtPath:tmpPath error:nil];
-    [self removeMANotificationObservers];
-}
-
-- (void)addMANotificationObservers
-{
-    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(MAImagePickerClosed) name:@"MAIPCFail" object:nil];
-    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(MAImagePickerChosen:) name:@"MAIPCSuccess" object:nil];
-}
-
-- (void)removeMANotificationObservers
-{
-    [[NSNotificationCenter defaultCenter] removeObserver:self name:@"MAIPCFail" object:nil];
-    [[NSNotificationCenter defaultCenter] removeObserver:self name:@"MAIPCSuccess" object:nil];
+    
+    [[NSFileManager defaultManager] removeItemAtPath:path error:nil];
 }
 
 @end

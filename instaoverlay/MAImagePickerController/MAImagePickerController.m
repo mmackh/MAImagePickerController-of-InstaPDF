@@ -11,14 +11,15 @@
 
 #import "UIImage+fixOrientation.h"
 
-#import <MediaPlayer/MediaPlayer.h>
-
 
 @interface MAImagePickerController ()
 - (void)image:(UIImage *)image didFinishSavingWithError:(NSError *)error contextInfo:(void *)contextInfo;
 @end
 
 @implementation MAImagePickerController
+{
+    BOOL volumeChangeOK;
+}
 
 @synthesize captureManager = _captureManager;
 @synthesize cameraToolbar = _cameraToolbar;
@@ -33,11 +34,30 @@
     [self.navigationController setNavigationBarHidden:YES];
     [self.view setBackgroundColor:[UIColor blackColor]];
     
-    //self.view.layer.cornerRadius = 8;
-    //self.view.layer.masksToBounds = YES;
     
-    if (_imageSource == 0 && [UIImagePickerController isSourceTypeAvailable:UIImagePickerControllerSourceTypeCamera])
+    
+    if (_sourceType == MAImagePickerControllerSourceTypeCamera && [UIImagePickerController isSourceTypeAvailable:UIImagePickerControllerSourceTypeCamera])
     {
+        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(MAImagePickerChosen:) name:@"MAIPCSuccessInternal" object:nil];
+        
+        [[NSNotificationCenter defaultCenter] addObserverForName:UIApplicationWillEnterForegroundNotification object:nil queue:[NSOperationQueue mainQueue] usingBlock:^(NSNotification *notification){
+            AudioSessionInitialize(NULL, NULL, NULL, NULL);
+            AudioSessionSetActive(YES);
+        }];
+        
+        [[NSNotificationCenter defaultCenter] addObserverForName:UIApplicationDidEnterBackgroundNotification object:nil queue:[NSOperationQueue mainQueue] usingBlock:^(NSNotification *notification)
+         {
+             AudioSessionSetActive(NO);
+         }];
+        
+        
+        AudioSessionInitialize(NULL, NULL, NULL, NULL);
+        AudioSessionSetActive(YES);
+        
+        // Volume View to hide System HUD
+        _volumeView = [[MPVolumeView alloc] initWithFrame:CGRectMake(-100, 0, 10, 0)];
+        [_volumeView sizeToFit];
+        [self.view addSubview:_volumeView];
         
         [self setCaptureManager:[[MACaptureSession alloc] init]];
         [_captureManager addVideoInputFromCamera];
@@ -123,6 +143,9 @@
     }
     else
     {
+        self.view.layer.cornerRadius = 8;
+        self.view.layer.masksToBounds = YES;
+        
         _invokeCamera = [[UIImagePickerController alloc] init];
         _invokeCamera.delegate = self;
         _invokeCamera.sourceType = UIImagePickerControllerSourceTypePhotoLibrary;
@@ -130,65 +153,38 @@
         [self.view addSubview:_invokeCamera.view];
     }
     
-    [[NSNotificationCenter defaultCenter]
-     addObserver:self
-     selector:@selector(pictureMAIMagePickerController)
-     name:@"AVSystemController_SystemVolumeDidChangeNotification"
-     object:nil];
-    
-    CGRect frame = CGRectMake(-1000, -1000, 100, 100);
-    MPVolumeView *volumeView = [[MPVolumeView alloc] initWithFrame:frame];
-    [volumeView sizeToFit];
-    [self.view addSubview:volumeView];
-    
 }
 
 - (void)viewDidAppear:(BOOL)animated
 {
-    if (_imageSource == 0 && [UIImagePickerController isSourceTypeAvailable:UIImagePickerControllerSourceTypeCamera])
+    if (_sourceType == MAImagePickerControllerSourceTypeCamera && [UIImagePickerController isSourceTypeAvailable:UIImagePickerControllerSourceTypeCamera])
     {
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(pictureMAIMagePickerController)
+                                                     name:@"AVSystemController_SystemVolumeDidChangeNotification"
+                                                   object:nil];
+        
         [_pictureButton setEnabled:YES];
         [[_captureManager captureSession] startRunning];
     }
 }
 
-- (void)viewWillAppear:(BOOL)animated
-{
-    AudioSessionInitialize(NULL, NULL, NULL, NULL);
-    AudioSessionSetActive(YES);
-}
-
-- (void)dismissMAImagePickerController
-{
-    AudioSessionSetActive(NO);
-    
-    if (_imageSource == 0 && [UIImagePickerController isSourceTypeAvailable:UIImagePickerControllerSourceTypeCamera])
-    {
-        [[_captureManager captureSession] stopRunning];
-    }
-    else
-    {
-        [_invokeCamera removeFromParentViewController];
-    }
-    
-    [[NSNotificationCenter defaultCenter] postNotificationName:@"MAIPCFail" object:nil];
-    
-    /*[self.navigationController dismissViewControllerAnimated:YES completion:^(void)
-    {
-    }];
-     */
-}
-
 - (void)viewWillDisappear:(BOOL)animated
 {
-    if (_imageSource == 0)
+    if (_sourceType == MAImagePickerControllerSourceTypeCamera && [UIImagePickerController isSourceTypeAvailable:UIImagePickerControllerSourceTypeCamera])
     {
+        [[NSNotificationCenter defaultCenter] removeObserver:self name:@"AVSystemController_SystemVolumeDidChangeNotification" object:nil];
+        
         [[_captureManager captureSession] stopRunning];
     }
 }
 
 - (void)pictureMAIMagePickerController
 {
+    if (![[_captureManager captureSession] isRunning]) {
+        return;
+    }
+    
     [_pictureButton setEnabled:NO];
     [_captureManager captureStillImage];
 }
@@ -223,26 +219,35 @@
 {
     [[_captureManager captureSession] stopRunning];
     
-    [UIView beginAnimations:@"fade" context:nil];
-    [UIView setAnimationDuration:0.05f];
-    [UIView setAnimationDelegate:self];
-    _cameraPictureTakenFlash.alpha = 0.5f;
-    [UIView commitAnimations];
+    MAImagePickerControllerAdjustViewController *adjustViewController = [[MAImagePickerControllerAdjustViewController alloc] init];
+    adjustViewController.sourceImage = [[self captureManager] stillImage];
     
-    [UIView beginAnimations:@"fade" context:nil];
-    [UIView setAnimationDelay:0.05f];
-    [UIView setAnimationDuration:0.01f];
-    [UIView setAnimationDelegate:self];
-    _cameraPictureTakenFlash.alpha = 0.0f;
-    [UIView setAnimationDidStopSelector:@selector(transitionToMAImagePickerControllerAdjustViewControllerSelector)];
-    [UIView commitAnimations];
+    [UIView animateWithDuration:0.05 delay:0.0 options:UIViewAnimationOptionCurveEaseInOut animations:^
+     {
+         _cameraPictureTakenFlash.alpha = 0.5f;
+     }
+                     completion:^(BOOL finished)
+     {
+         [UIView animateWithDuration:0.1 delay:0.0 options:UIViewAnimationOptionCurveEaseInOut animations:^
+          {
+              _cameraPictureTakenFlash.alpha = 0.0f;
+          }
+                          completion:^(BOOL finished)
+          {
+              CATransition* transition = [CATransition animation];
+              transition.duration = 0.4;
+              transition.type = kCATransitionFade;
+              transition.subtype = kCATransitionFromBottom;
+              [self.navigationController.view.layer addAnimation:transition forKey:kCATransition];
+              [self.navigationController pushViewController:adjustViewController animated:NO];
+          }];
+     }];
 }
 
 - (void)imagePickerControllerDidCancel:(UIImagePickerController *)picker
 {
     [self dismissMAImagePickerController];
 }
-
 
 - (void)imagePickerController:(UIImagePickerController *)picker didFinishPickingMediaWithInfo:(NSDictionary *)info
 {
@@ -262,19 +267,6 @@
     
 }
 
-- (void) transitionToMAImagePickerControllerAdjustViewControllerSelector
-{
-    
-    MAImagePickerControllerAdjustViewController *adjustViewController = [[MAImagePickerControllerAdjustViewController alloc] init];
-    adjustViewController.sourceImage = [[self captureManager] stillImage];
-    
-    CATransition* transition = [CATransition animation];
-    transition.duration = 0.4;
-    transition.type = kCATransitionFade;
-    transition.subtype = kCATransitionFromBottom;
-    [self.navigationController.view.layer addAnimation:transition forKey:kCATransition];
-    [self.navigationController pushViewController:adjustViewController animated:NO];
-}
 
 - (void)image:(UIImage *)image didFinishSavingWithError:(NSError *)error contextInfo:(void *)contextInfo
 {
@@ -292,6 +284,36 @@
 - (void)dealloc
 {
     _captureManager = nil;
+}
+
+- (void)dismissMAImagePickerController
+{
+    [self removeNotificationObservers];
+    if (_sourceType == MAImagePickerControllerSourceTypeCamera && [UIImagePickerController isSourceTypeAvailable:UIImagePickerControllerSourceTypeCamera])
+    {
+        [[_captureManager captureSession] stopRunning];
+        AudioSessionSetActive(NO);
+    }
+    else
+    {
+        [_invokeCamera removeFromParentViewController];
+    }
+    
+    [_delegate imagePickerDidCancel];
+}
+
+- (void) MAImagePickerChosen:(NSNotification *)notification
+{
+    AudioSessionSetActive(NO);
+    
+    [self removeNotificationObservers];
+    [_delegate imagePickerDidChooseImageWithPath:[notification object]];
+}
+
+- (void)removeNotificationObservers
+{
+    
+    [[NSNotificationCenter defaultCenter] removeObserver:self];
 }
 
 - (BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)interfaceOrientation

@@ -4,7 +4,7 @@ MAImagePickerController is a critical component of the InstaPDF (http://instapdf
 offer your insights into making the component better.
 
 Credits:
-- Maximilian Mackh (<a href="http://twitter.com/mmackh">@mmackh</a>)
+- Maximilian Mackh (<a href="http://twitter.com/mmackh">@mmackh</a>) - Creator & Maintainer
 - Utkarsh Sinha (<a href="http://twitter.com/aishack">@aishack</a>) - Excellent Tutorials
 - Jason Job (<a href="https://twitter.com/musicalgeometry">@musicalgeometry</a>) - Excellent Tutorial
 - Karl Phillip Buhr (<a href="https://twitter.com/karlphillip">@karlphillip</a>) - Excellent Square Detection Code
@@ -17,7 +17,7 @@ Be sure to checkout the ToDo!
 1. ~~Improve Paper (Edge) Detection~~
 2. Fix rotation of UIImages chosen from the Library
 3. Store the rotations in the final view
-4. Improve API
+4. ~~Improve API~~
 
 
 ## Screenshots
@@ -31,57 +31,44 @@ Be sure to checkout the ToDo!
 ## Using it in your project
 
 1. Add all the necessary files inside MAImagePicker to your Project
-2. #import "MAImagePickerController.h"
-3. IMPORTANT: This project uses the OpenCV framework download it here: 'http://opencv.org/'
+2. #import "MAImagePickerController.h" in your ViewController's header (.h) file & declare that it can be delegated by MAImagePickerControllerDelegate
+3. IMPORTANT: This project uses the OpenCV framework. Download the newest version here: 'http://opencv.org/'
 4. The API is rather simple, use it like this:
 5. Double check all the necessary frameworks: 'CoreImage.framework', 'opencv2.framework', 'QuartzCore.framework', 'ImageIO.framework', 'CoreMedia.framework', 'AVFoundation.framework'
 
 ```objective-c
 - (IBAction)initButton:(id)sender
 {
-    MAImagePickerController *customImagePickerController = [[MAImagePickerController alloc] init];
-    customImagePickerController.imageSource = 0; //0 -> Camera (if available), 1 -> Library
+    MAImagePickerController *imagePicker = [[MAImagePickerController alloc] init];
+   
+    [imagePicker setDelegate:self];
+    [imagePicker setSourceType:MAImagePickerControllerSourceTypeCamera];
     
-    UINavigationController *navigationController = [[UINavigationController alloc] initWithRootViewController:customImagePickerController];
-    [self addMANotificationObservers];
+    UINavigationController *navigationController = [[UINavigationController alloc] initWithRootViewController:imagePicker];
+    
     [self presentViewController:navigationController animated:YES completion:nil];
 }
 
-- (void) MAImagePickerClosed
+- (void)imagePickerDidCancel
 {
-    NSLog(@"No Image Chosen");
-    [self removeMANotificationObservers];
     [self dismissViewControllerAnimated:YES completion:nil];
 }
 
-- (void) MAImagePickerChosen:(NSNotification *)notification
+- (void)imagePickerDidChooseImageWithPath:(NSString *)path
 {
     [self dismissViewControllerAnimated:YES completion:nil];
     
-    NSString *tmpPath = [notification object];
-    if ([[NSFileManager defaultManager] fileExistsAtPath:tmpPath])
+    if ([[NSFileManager defaultManager] fileExistsAtPath:path])
     {
-        NSLog(@"File Found at %@", tmpPath);
+        NSLog(@"File Found at %@", path);
         
     }
     else
     {
-        NSLog(@"No File Found at %@", tmpPath);
+        NSLog(@"No File Found at %@", path);
     }
-    [[NSFileManager defaultManager] removeItemAtPath:tmpPath error:nil];
-    [self removeMANotificationObservers];
-}
-
-- (void)addMANotificationObservers
-{
-    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(MAImagePickerClosed) name:@"MAIPCFail" object:nil];
-    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(MAImagePickerChosen:) name:@"MAIPCSuccess" object:nil];
-}
-
-- (void)removeMANotificationObservers
-{
-    [[NSNotificationCenter defaultCenter] removeObserver:self name:@"MAIPCFail" object:nil];
-    [[NSNotificationCenter defaultCenter] removeObserver:self name:@"MAIPCSuccess" object:nil];
+    
+    [[NSFileManager defaultManager] removeItemAtPath:path error:nil];
 }
 ```
 

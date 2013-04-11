@@ -118,8 +118,6 @@
 - (void)comfirmFinishedImage
 {
     [self storeImageToCache];
-    [self.navigationController dismissViewControllerAnimated:YES completion:nil];
-    
 }
 
 - (void)adjustPreviewImage
@@ -201,9 +199,9 @@
         }
         
         dispatch_async(dispatch_get_main_queue(),
-        ^{
-            [self updateImageView];
-        });
+                       ^{
+                           [self updateImageView];
+                       });
     });
 }
 
@@ -245,7 +243,7 @@
     NSString *tmpPath = [NSString stringWithFormat:@"%@/%@", [NSSearchPathForDirectoriesInDomains(NSCachesDirectory, NSUserDomainMask, YES) objectAtIndex:0], @"maimagepickercontollerfinalimage.jpg"];
     NSData* imageData = UIImageJPEGRepresentation(_adjustedImage, 0.8);
     [imageData writeToFile:tmpPath atomically:NO];
-    [[NSNotificationCenter defaultCenter] postNotificationName:@"MAIPCSuccess" object:tmpPath];
+    [[NSNotificationCenter defaultCenter] postNotificationName:@"MAIPCSuccessInternal" object:tmpPath];
 }
 
 - (IBAction) filterChanged:(id) sender withEvent:(UIEvent *) event
@@ -308,7 +306,7 @@
         
         [self adjustPreviewImage];
     }
-
+    
 }
 
 - (void)setupEditor
@@ -328,7 +326,7 @@
     [_firstSettingIcon setTag:1];
     [_firstSettingIcon addTarget:self action:@selector(filterChanged:withEvent:) forControlEvents:UIControlEventTouchUpInside];
     [firstSetting addSubview:_firstSettingIcon];
-
+    
     UIView *secondSetting = [[UIView alloc] initWithFrame:CGRectMake(80, 0, 80, editorView.frame.size.height)];
     _secondSettingIcon = [UIButton buttonWithType:UIButtonTypeCustom];
     _secondSettingIcon.accessibilityLabel = @"Text Only Enhance Filter";

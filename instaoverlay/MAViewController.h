@@ -8,7 +8,9 @@
 
 #import <UIKit/UIKit.h>
 
-@interface MAViewController : UIViewController
+#import "MAImagePickerController.h"
+
+@interface MAViewController : UIViewController <MAImagePickerControllerDelegate>
 
 - (IBAction)initButton:(id)sender;
 
