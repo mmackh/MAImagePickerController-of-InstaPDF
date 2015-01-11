@@ -1,4 +1,6 @@
-# MAImagePickerController aka. InstaOverlay
+# WARNING - CONSIDER THIS CODEBASE IS DEPRECATED - TAKE A LOOK AT [IPDFCameraViewController](https://github.com/mmackh/IPDFCameraViewController)
+
+## MAImagePickerController aka. InstaOverlay
 
 MAImagePickerController is a critical component of the InstaPDF (http://instapdf.me) for iPhone app. I've started to code in Objective C a couple of months ago, so please
 offer your insights into making the component better.
