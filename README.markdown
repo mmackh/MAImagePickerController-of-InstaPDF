@@ -1,4 +1,4 @@
-# WARNING - CONSIDER THIS CODEBASE IS DEPRECATED - TAKE A LOOK AT [IPDFCameraViewController](https://github.com/mmackh/IPDFCameraViewController)
+# WARNING - CONSIDER THIS CODEBASE DEPRECATED. TAKE A LOOK AT: [IPDFCameraViewController](https://github.com/mmackh/IPDFCameraViewController)
 
 ## MAImagePickerController aka. InstaOverlay
 
